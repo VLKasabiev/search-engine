@@ -16,13 +16,8 @@ import java.util.Optional;
 
 @Repository
 public interface LemmaRepository extends JpaRepository<LemmaEntity, Long> {
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
-//    @Transactional
     @Query("SELECT l FROM LemmaEntity l WHERE l.lemma = :lemma AND l.siteId = :siteEntity ")
     Optional<LemmaEntity> findByLemma(String lemma, SiteEntity siteEntity);
-
-//    @Query("SELECT l FROM LemmaEntity l WHERE l.lemma = :lema FOR UPDATE")
-//    Optional<LemmaEntity> findByLemma(@Param("lema") String lema);
 
     @Query("SELECT COUNT(*) FROM LemmaEntity l WHERE l.siteId = :siteEntity")
     int getLemmasBySiteId(SiteEntity siteEntity);

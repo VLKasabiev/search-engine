@@ -42,8 +42,6 @@ public class IndexingServiceImpl implements IndexingService {
     private final SitesList sites;
     private String url;
     AtomicBoolean isClosed = new AtomicBoolean();
-//    CopyOnWriteArrayList<ForkJoinPool> listPools = new CopyOnWriteArrayList<>();
-
     private StringBuilder builder;
     private ExecutorService executorService;
 
@@ -72,16 +70,9 @@ public class IndexingServiceImpl implements IndexingService {
             url = site.getUrl();
             SiteEntity siteEntity = fillingSiteEntity(site);
             siteRepository.save(siteEntity);
-//            System.out.println("Это executor 1 - " + executorService.isShutdown());
-
             parallelization(siteEntity, builder1, uniqueUrl);
-
-//            System.out.println("Это IndexStatus тоже ----- " + siteEntity.getIndexStatus());
-//            changeSiteStatusIfOk(siteEntity);
         }
-//        System.out.println("Это executor 3 - " + executorService.isShutdown());
         executorService.shutdown();
-//        System.out.println(builder.toString());
     }
 
     @Override
@@ -116,7 +107,6 @@ public class IndexingServiceImpl implements IndexingService {
                     PageEntity pageEntity = fillingPageEntity(url, siteEntity);
                     fillLemmaService(siteEntity.get(), builder, pageEntity);
                 }
-//                System.out.println(builder);
             } catch (HttpStatusException e) {
                 if (e.getStatusCode() == 404) {
                     response.setError("Такой cтраницы не существует!");
@@ -154,7 +144,6 @@ public class IndexingServiceImpl implements IndexingService {
             response.setError("Индексация не запущена!");
         } else {
             isClosed.set(true);
-//            listPools.forEach(fjp -> fjp.shutdownNow());
             response.setResult(true);
         }
         return response;
@@ -176,7 +165,6 @@ public class IndexingServiceImpl implements IndexingService {
         executorService.submit(() -> {
             long start = System.currentTimeMillis();
             ForkJoinPool FJP = new ForkJoinPool();
-//            listPools.add(FJP);
             FJP.invoke(new LinksCrawler(url, url, siteEntity,
                     pageRepository, lemmaRepository, indexRepository,
                     builder1, uniqueUrl, isClosed, siteRepository));

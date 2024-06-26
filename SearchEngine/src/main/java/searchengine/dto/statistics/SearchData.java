@@ -17,9 +17,6 @@ public class SearchData {
     private double relevance;
 
     public SearchData(PageEntity pageEntity, String title, String snippet, double relevance) {
-//        this.site = site;
-//        this.siteName = siteName;
-//        this.uri = uri;
         site = pageEntity.getSiteId().getUrl();
         siteName = pageEntity.getSiteId().getName();
         uri = pageEntity.getPath();

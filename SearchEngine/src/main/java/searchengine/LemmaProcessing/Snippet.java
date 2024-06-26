@@ -1,7 +1,5 @@
 package searchengine.LemmaProcessing;
 
-import searchengine.LemmaFinder;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,21 +20,13 @@ public class Snippet {
     public String findAndExtractSentence(String t, List<String> wordsToSearch) throws IOException {
         wordsToSnippet = new ArrayList<>();
         StringBuilder builder = new StringBuilder();
-//        lemmaFinder = LemmaFinder.getInstance();
         String text = lemmaFinder.removeHTMLTags(t);
         String newText = findSnippet(text, wordsToSearch);
         String[] sentences = newText.split("[.!?:;]\\s*");
-//        for (String sentence : sentences) {
-//            if (sentence.contains("<b>")) {
-//                return sentence;
-//            }
-//        }
-//        return null;
-
         for (String word : wordsToSnippet) {
             for (String sentence : sentences) {
                 if (sentence.contains(word)) {
-                    builder.append(sentence + " .... ");
+                    builder.append(sentence + "  ....  ");
                     break;
                 }
             }
@@ -50,7 +40,6 @@ public class Snippet {
         for (String wordToSearch : wordsToSearch) {
             builder.append(lemmaFinder.checkWord(words, wordToSearch, wordsToSnippet));
         }
-
         return builder.toString();
     }
 }

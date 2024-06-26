@@ -4,12 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Autowired;
-import searchengine.model.PageEntity;
-import searchengine.repositories.PageRepository;
+import searchengine.LemmaProcessing.LemmaFinder;
 
 import java.util.*;
 @RequiredArgsConstructor

@@ -1,12 +1,13 @@
 package searchengine.services;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import searchengine.LemmaFinder;
+import searchengine.LemmaProcessing.LemmaFinder;
 import searchengine.LemmaProcessing.Snippet;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class SearchServiceImpl implements SearchService{
     private Snippet snippet = new Snippet();
     @Autowired
@@ -43,10 +45,12 @@ public class SearchServiceImpl implements SearchService{
 
     private HashMap<PageEntity, Double> mapOfAbsRel;
 
+    private double maxAbsRel;
+
     @Override
     public SearchResponse searching(String query, String site, int offset, int limit) throws IOException {
         long start = System.currentTimeMillis();
-        List<String> listSites = createSitesList(site);
+        List<String> listSites = sitesToSearch(site);
         wordsFromQuery = new ArrayList<>();
         SearchResponse searchResponse = new SearchResponse();
         searchResponse.setResult(true);
@@ -63,7 +67,7 @@ public class SearchServiceImpl implements SearchService{
                 if (i == 0) {
                     pageList = indexRepository.findAllPagesByLemmaId(wordsFromQuery.get(i));
                 } else {
-                    indexListFilter(wordsFromQuery.get(i), pageList);
+                    pageListFilter(wordsFromQuery.get(i), pageList);
                 }
             }
 
@@ -84,18 +88,17 @@ public class SearchServiceImpl implements SearchService{
             newSearchDataList.add(searchDataList.get(i));
         }
         searchResponse.setCount(searchDataList.size());
-//        searchResponse.setData(searchDataList);
         searchResponse.setData(newSearchDataList);
 
-        System.out.println(searchDataList.size() + " - Это count");
-        System.out.println("Это offset - " + offset);
-        System.out.println("Это limit - " +  limit);
+        log.info(searchDataList.size() + " - Это count");
+        log.info("Это offset - " + offset);
+        log.info("Это limit - " +  limit);
         long executTime = System.currentTimeMillis() - start;
-        System.out.println(executTime + " ms");
+        log.info(executTime + " ms");
         return searchResponse;
     }
 
-    private List<String> createSitesList(String site) {
+    private List<String> sitesToSearch(String site) {
         ArrayList<String> listSites = new ArrayList<>();
         List<Site> siteList;
         if (site == null) {
@@ -127,7 +130,7 @@ public class SearchServiceImpl implements SearchService{
                 .collect(Collectors.toList());
     }
 
-    private void indexListFilter(LemmaEntity lemmaEntity, List<PageEntity> pageList) {
+    private void pageListFilter (LemmaEntity lemmaEntity, List<PageEntity> pageList) {
         List<PageEntity> pageList1 = indexRepository.findAllPagesByLemmaId(lemmaEntity);
         List<PageEntity> newPageList = new ArrayList<>();
         for (PageEntity pagEnt : pageList) {
@@ -145,13 +148,19 @@ public class SearchServiceImpl implements SearchService{
     }
 
     private void fillSearchDataList(List<PageEntity> pageList, List<SearchData> searchDataList) throws IOException{
-        double maxAbsRel = 0;
-        findMaxAbsRel(maxAbsRel, pageList);
-
-        findRelativeRelevance(maxAbsRel, pageList, searchDataList);
+        maxAbsRel = 0;
+        findAbsRel(pageList);
+        for (PageEntity pl : pageList) {
+            try {
+                SearchData searchData = fillSearchData(pl);
+                searchDataList.add(searchData);
+            }catch (HttpStatusException ex) {
+                log.error("connection error!!!");
+            }
+        }
     }
 
-    private void findMaxAbsRel(double maxAbsRel, List<PageEntity> pgs) {
+    private void findAbsRel(List<PageEntity> pgs) {
         mapOfAbsRel = new HashMap<>();
         for (PageEntity p : pgs) {
             double absRel = 0;
@@ -173,28 +182,14 @@ public class SearchServiceImpl implements SearchService{
         return document;
     }
 
-    private void findRelativeRelevance(double maxAbsRel,
-                                       List<PageEntity> pgs, List<SearchData> searchDataList) throws IOException {
-        for (PageEntity p : pgs) {
-            String pathh = p.getSiteId().getUrl() + p.getPath();
-            try {
-                Document doc = connectUrl(pathh);
-                double rel;
-                double absRel = mapOfAbsRel.get(p);
-//                Snippet snippet = new Snippet();
-                String snip = snippet.findAndExtractSentence(p.getContent(), wordsFromQuery.stream()
-                        .map(nl -> nl.getLemma()).collect(Collectors.toList()));
+    private SearchData fillSearchData(PageEntity pageEntity) throws IOException {
+        String path = pageEntity.getSiteId().getUrl() + pageEntity.getPath();
+        Document doc = connectUrl(path);
+        double absRel = mapOfAbsRel.get(pageEntity);
+        String snip = snippet.findAndExtractSentence(pageEntity.getContent(), wordsFromQuery.stream()
+                .map(nl -> nl.getLemma()).collect(Collectors.toList()));
 
-                rel = absRel / maxAbsRel;
-
-                SearchData searchData = new SearchData(p, doc.title(), snip, rel);
-
-                searchDataList.add(searchData);
-
-            }catch (HttpStatusException ex) {
-                System.out.println("knfkfi");
-            }
-            System.out.println();
-        }
+        double rel = absRel / maxAbsRel;
+        return new SearchData(pageEntity, doc.title(), snip, rel);
     }
 }

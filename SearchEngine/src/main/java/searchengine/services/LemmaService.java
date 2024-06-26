@@ -1,8 +1,7 @@
 package searchengine.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
-import searchengine.LemmaFinder;
+import searchengine.LemmaProcessing.LemmaFinder;
 import searchengine.model.LemmaEntity;
 import searchengine.model.PageEntity;
 import searchengine.model.SiteEntity;
@@ -22,10 +21,6 @@ public class LemmaService {
     private IndexRepository indexRepository;
     StringBuilder builder = new StringBuilder();
 
-//    String url = "jdbc:mysql://localhost:3306/searchEngine";
-//    String user = "root";
-//    String password = "xxxkas01";
-
     public LemmaService(SiteEntity siteEntity,
                         LemmaRepository lemmaRepository, IndexRepository indexRepository,
                         StringBuilder builder) {
@@ -40,25 +35,20 @@ public class LemmaService {
         for (Map.Entry<String, Integer> lemma : fillMap(pageEntity).entrySet()) {
             Optional<LemmaEntity> lemmaEntity;
             try {
-//                synchronized (this) {
-                    lemmaEntity = lemmaRepository.findByLemma(lemma.getKey(), siteEntity);
-//                lemmaEntity = findLemma(lemma.getKey(), siteEntity);
-
-                    if (lemmaEntity.isPresent()) {
-                        LemmaEntity l = lemmaEntity.get();
-                        setFrequencyIfExist(l);
-                        lemmaRepository.save(l);
-                        indexService.fillIndexEntity(pageEntity, l, lemma.getValue().floatValue());
-                    } else {
-                        LemmaEntity lemmaEntity1 = new LemmaEntity();
-                        lemmaEntity1.setLemma(lemma.getKey());
-                        lemmaEntity1.setSiteId(siteEntity);
-                        lemmaEntity1.setFrequency(1L);
-                        lemmaRepository.save(lemmaEntity1);
-                        indexService.fillIndexEntity(pageEntity, lemmaEntity1, lemma.getValue().floatValue());
-                    }
-//                }
-
+                lemmaEntity = lemmaRepository.findByLemma(lemma.getKey(), siteEntity);
+                if (lemmaEntity.isPresent()) {
+                    LemmaEntity l = lemmaEntity.get();
+                    setFrequencyIfExist(l);
+                    lemmaRepository.save(l);
+                    indexService.fillIndexEntity(pageEntity, l, lemma.getValue().floatValue());
+                } else {
+                    LemmaEntity lemmaEntity1 = new LemmaEntity();
+                    lemmaEntity1.setLemma(lemma.getKey());
+                    lemmaEntity1.setSiteId(siteEntity);
+                    lemmaEntity1.setFrequency(1L);
+                    lemmaRepository.save(lemmaEntity1);
+                    indexService.fillIndexEntity(pageEntity, lemmaEntity1, lemma.getValue().floatValue());
+                }
             }catch (Exception e) {
                 siteEntity.setLastError(e.getMessage());
                 builder.append(" Здесь выскочила ошибка: " +
@@ -66,11 +56,6 @@ public class LemmaService {
             }
         }
     }
-
-//    @Cacheable("lemmaEntities")
-//    private Optional<LemmaEntity> findLemma(String lemma, SiteEntity siteEntity) {
-//        return lemmaRepository.findByLemma(lemma, siteEntity);
-//    }
 
     private Map<String, Integer> fillMap (PageEntity pageEntity) throws IOException {
         LemmaFinder lemmaFinder = LemmaFinder.getInstance();

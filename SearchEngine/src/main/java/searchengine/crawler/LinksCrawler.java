@@ -122,12 +122,6 @@ public class LinksCrawler extends RecursiveAction {
             String link = elem.attr("abs:href");
             boolean checked = uniqueUrl.add(link);
             if (checkLink(checked, link)) {
-//                if (isClosed.get() == true) {
-//                    site.setIndexStatus(IndexStatus.FAILED);
-//                    site.setLastError("Индексация остановлена пользователем!");
-//                    return;
-//                }
-
             LinksCrawler task = new LinksCrawler(link, regexUrl,
                     site, pageRepository, lemmaRepository, indexRepository,
                     builder, uniqueUrl, isClosed, siteRepository);

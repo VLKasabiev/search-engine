@@ -1,4 +1,4 @@
-package searchengine;
+package searchengine.LemmaProcessing;
 
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
@@ -138,7 +138,6 @@ public class LemmaFinder {
     public String checkWord(String[] words, String wordToSearch, List<String> wordToSnippet) {
         int a = 0;
         StringBuilder builder = new StringBuilder();
-//        List<Integer> wordNums = new ArrayList<>();
         for (int i = 0; i < words.length; i++) {
             String word = words[i].replaceAll("[^а-яА-Я]", "").toLowerCase();
             if (!word.isBlank()) {

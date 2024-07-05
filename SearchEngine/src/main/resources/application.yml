@@ -5,6 +5,8 @@ indexing-settings:
       name: Nopaper.ru
     - url: https://nikoartgallery.com
       name: NikoartGallery.ru
+    - url: https://playback.ru
+      name: PlayBack
 server:
   port: 8080
 

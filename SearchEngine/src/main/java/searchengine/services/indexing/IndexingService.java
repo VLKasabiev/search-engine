@@ -1,6 +1,8 @@
-package searchengine.services;
+package searchengine.services.indexing;
 
-import searchengine.dto.statistics.IndexingResponse;
+import searchengine.config.Site;
+import searchengine.dto.index.IndexingResponse;
+import searchengine.model.SiteEntity;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -12,4 +14,5 @@ public interface IndexingService {
     IndexingResponse stopIndexing();
 
     IndexingResponse indexingOnePage(String url) throws IOException;
+
 }

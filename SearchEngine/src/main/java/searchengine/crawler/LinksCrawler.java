@@ -8,7 +8,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
-import searchengine.config.ConnectSettings;
 import searchengine.model.IndexStatus;
 import searchengine.model.PageEntity;
 import searchengine.model.SiteEntity;
@@ -16,7 +15,6 @@ import searchengine.repositories.IndexRepository;
 import searchengine.repositories.LemmaRepository;
 import searchengine.repositories.PageRepository;
 import searchengine.repositories.SiteRepository;
-import searchengine.services.IndexingServiceImpl;
 import searchengine.services.LemmaService;
 
 import java.io.IOException;
@@ -26,21 +24,16 @@ import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.atomic.AtomicBoolean;
 @Log4j2
 public class LinksCrawler extends RecursiveAction {
-    private ConnectSettings connectSettings;
     private String url;
     private SiteEntity site;
     private String regexUrl;
     private Integer statusCode;
     private String content;
     private String path;
-    @Autowired
-    private PageRepository pageRepository;
-    @Autowired
-    private LemmaRepository lemmaRepository;
-    @Autowired
-    private IndexRepository indexRepository;
-    @Autowired
-    private SiteRepository siteRepository;
+    private final PageRepository pageRepository;
+    private final LemmaRepository lemmaRepository;
+    private final IndexRepository indexRepository;
+    private final SiteRepository siteRepository;
     private StringBuilder builder;
 
     private HashSet<String> uniqueUrl;
@@ -68,8 +61,7 @@ public class LinksCrawler extends RecursiveAction {
     protected void compute() {
         if (isClosed.get() == true) {
             site.setIndexStatus(IndexStatus.FAILED);
-            site.setLastError("Индексация остановлена пользователем!");
-            log.info("Произошла операция закрытия!!!");
+            log.info("a closing operation occurred!!!");
             return;
         }
         try {
@@ -138,8 +130,8 @@ public class LinksCrawler extends RecursiveAction {
                 && link.startsWith(regexUrl)
                 && !link.equals(regexUrl)
                 && !link.equals(regexUrl + "/null")
-                && (!link.endsWith(".png") || !link.endsWith(".JPG") || !link.endsWith(".pdf") || !link.endsWith(".xlsx")
-                    || !link.endsWith(".doc") || !link.endsWith(".jpg") || !link.endsWith(".yaml"));
+                && !link.endsWith(".png") && !link.endsWith(".JPG") && !link.endsWith(".pdf") && !link.endsWith(".xlsx")
+                    && !link.endsWith(".doc") && !link.endsWith(".jpg") && !link.endsWith(".yaml") && !link.endsWith(".xml");
 
     }
 

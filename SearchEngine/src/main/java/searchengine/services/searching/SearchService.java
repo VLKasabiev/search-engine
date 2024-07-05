@@ -1,10 +1,7 @@
-package searchengine.services;
+package searchengine.services.searching;
 
-import searchengine.dto.statistics.SearchResponse;
-import searchengine.model.SiteEntity;
-
+import searchengine.dto.search.SearchResponse;
 import java.io.IOException;
-import java.util.List;
 
 public interface SearchService {
 

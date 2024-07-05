@@ -6,7 +6,6 @@ import searchengine.model.LemmaEntity;
 import searchengine.model.PageEntity;
 import searchengine.repositories.IndexRepository;
 public class IndexService {
-    @Autowired
     private final IndexRepository indexRepository;
     private StringBuilder builder;
     public IndexService(IndexRepository indexRepository, StringBuilder builder) {

@@ -1,13 +1,12 @@
 package searchengine.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import searchengine.LemmaProcessing.LemmaFinder;
+import searchengine.lemma.processing.LemmaFinder;
 import searchengine.model.LemmaEntity;
 import searchengine.model.PageEntity;
 import searchengine.model.SiteEntity;
 import searchengine.repositories.IndexRepository;
 import searchengine.repositories.LemmaRepository;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
@@ -15,10 +14,8 @@ public class LemmaService {
     private IndexService indexService;
     private SiteEntity siteEntity;
     private PageEntity pageEntity;
-    @Autowired
-    private LemmaRepository lemmaRepository;
-    @Autowired
-    private IndexRepository indexRepository;
+    private final LemmaRepository lemmaRepository;
+    private final IndexRepository indexRepository;
     StringBuilder builder = new StringBuilder();
 
     public LemmaService(SiteEntity siteEntity,

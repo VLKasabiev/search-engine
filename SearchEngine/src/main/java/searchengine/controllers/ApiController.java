@@ -2,17 +2,14 @@ package searchengine.controllers;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import searchengine.dto.statistics.IndexingResponse;
-import searchengine.dto.statistics.SearchResponse;
+import searchengine.dto.index.IndexingResponse;
+import searchengine.dto.search.SearchResponse;
 import searchengine.dto.statistics.StatisticsResponse;
-import searchengine.model.SiteEntity;
-import searchengine.services.IndexingService;
-import searchengine.services.SearchService;
-import searchengine.services.SearchServiceImpl;
-import searchengine.services.StatisticsService;
+import searchengine.services.indexing.IndexingService;
+import searchengine.services.searching.SearchService;
+import searchengine.services.statistic.StatisticsService;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @RestController

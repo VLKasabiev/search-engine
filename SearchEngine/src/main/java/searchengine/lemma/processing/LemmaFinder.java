@@ -1,4 +1,4 @@
-package searchengine.LemmaProcessing;
+package searchengine.lemma.processing;
 
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
@@ -125,7 +125,7 @@ public class LemmaFinder {
                 builder.append(element.ownText() + ". ");
             }
             else if (!element.ownText().isBlank() && element.ownText().trim().endsWith(".")) {
-                builder.append(element.ownText());
+                builder.append(element.ownText() + ". ");
             }
         }
         return builder.toString();
@@ -135,24 +135,17 @@ public class LemmaFinder {
         String[] words = text.split("\\s+");
         return words;
     }
-    public String checkWord(String[] words, String wordToSearch, List<String> wordToSnippet) {
-        int a = 0;
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < words.length; i++) {
-            String word = words[i].replaceAll("[^а-яА-Я]", "").toLowerCase();
-            if (!word.isBlank()) {
-                for (String normalWord : luceneMorphology.getNormalForms(word)) {
-                    if (wordToSearch.equalsIgnoreCase(normalWord)) {
-                        a++;
-                        words[i] = words[i].replace(words[i], "<b>" + words[i] + "</b>");
-                        if (a == 1) {
-                            wordToSnippet.add(words[i]);
-                        }
-                    }
+    public boolean checkWord(String[] words, String wordToSearch, int i) {
+        boolean wordIsPresent = false;
+        String w = words[i].replaceAll("[^а-яА-Я]", "");
+        if (!w.isBlank()) {
+            for (String normalWord : luceneMorphology.getNormalForms(w.toLowerCase())) {
+                if (normalWord.equals(wordToSearch)) {
+                    wordIsPresent = true;
+                    words[i] = words[i].replace(w, "<b>" + w + "</b>");
                 }
             }
-            builder.append((words[i] + " "));
         }
-        return builder.toString();
+        return wordIsPresent;
     }
 }

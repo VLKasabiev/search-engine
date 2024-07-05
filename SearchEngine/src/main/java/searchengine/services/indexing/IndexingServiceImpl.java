@@ -1,5 +1,4 @@
-package searchengine.services;
-
+package searchengine.services.indexing;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.jsoup.HttpStatusException;
@@ -10,7 +9,7 @@ import org.springframework.stereotype.Service;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
 import searchengine.crawler.LinksCrawler;
-import searchengine.dto.statistics.IndexingResponse;
+import searchengine.dto.index.IndexingResponse;
 import searchengine.model.IndexStatus;
 import searchengine.model.LemmaEntity;
 import searchengine.model.PageEntity;
@@ -19,6 +18,8 @@ import searchengine.repositories.IndexRepository;
 import searchengine.repositories.LemmaRepository;
 import searchengine.repositories.PageRepository;
 import searchengine.repositories.SiteRepository;
+import searchengine.services.LemmaService;
+
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.time.LocalDateTime;
@@ -30,23 +31,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 @Log4j2
 public class IndexingServiceImpl implements IndexingService {
-    @Autowired
     private final SiteRepository siteRepository;
-    @Autowired
     private final PageRepository pageRepository;
-    @Autowired
     private final LemmaRepository lemmaRepository;
-    @Autowired
     private final IndexRepository indexRepository;
 
     private final SitesList sites;
     private String url;
-    AtomicBoolean isClosed = new AtomicBoolean();
+    private AtomicBoolean isClosed = new AtomicBoolean();
     private StringBuilder builder;
     private ExecutorService executorService;
 
     @Override
-    public IndexingResponse startInMiltithread() throws ExecutionException, InterruptedException {
+    public IndexingResponse startInMiltithread(){
         IndexingResponse response = new IndexingResponse();
             response.setResult(true);
             CompletableFuture<Void> future = CompletableFuture
@@ -178,6 +175,9 @@ public class IndexingServiceImpl implements IndexingService {
         if (!siteEntity.getIndexStatus().equals(IndexStatus.FAILED)) {
             siteEntity.setIndexStatus(IndexStatus.INDEXED);
             siteEntity.setDateTime(LocalDateTime.now());
+        }
+        if (isClosed.get() == true) {
+            siteEntity.setLastError("Индексация остановлена пользователем");
         }
         siteRepository.save(siteEntity);
     }

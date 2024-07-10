@@ -98,7 +98,7 @@ public class LinksCrawler extends RecursiveAction {
                         map.join();
                     }
                 }
-            }catch (HttpStatusException e) {
+            } catch (HttpStatusException e) {
                 statusCode = e.getStatusCode();
                 content = " ";
                 pageEntity = fillingPage();

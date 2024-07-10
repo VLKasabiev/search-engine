@@ -2,10 +2,10 @@ package searchengine.services.searching;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import searchengine.lemma.processing.LemmaFinder;
 import searchengine.lemma.processing.Snippet;
@@ -21,7 +21,6 @@ import searchengine.repositories.IndexRepository;
 import searchengine.repositories.LemmaRepository;
 import searchengine.repositories.PageRepository;
 import searchengine.repositories.SiteRepository;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,7 +29,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Log4j2
 public class SearchServiceImpl implements SearchService{
-    private Snippet snippet = new Snippet();
+    private Snippet snippet;
+
+    private LemmaFinder lemmaFinder;
 
     private final LemmaRepository lemmaRepository;
     private final SiteRepository siteRepository;
@@ -39,25 +40,29 @@ public class SearchServiceImpl implements SearchService{
 
     private final SitesList sites;
     private List<LemmaEntity> wordsFromQuery;
-
     private HashMap<PageEntity, Double> mapOfAbsRel;
-
+    private Map<PageEntity, Double> mapOfRel;
     private SearchResponse searchResponse;
     private List<SearchData> searchDataList;
-
-    private double maxAbsRel;
+    private double maxAbsRel = 0;
+    private List<PageEntity> sortedPageList;
+    private List<PageEntity> totalPageList;
 
     @Override
     public SearchResponse searching(String query, String site, int offset, int limit) throws IOException {
+        log.info(offset + " - This is offset");
+        log.info(limit + " - This is limit");
         long start = System.currentTimeMillis();
         if (offset != 0) {
             return searchDataListToShow(offset, limit, start);
         }
         List<String> listSites = sitesToSearch(site);
+        lemmaFinder = LemmaFinder.getInstance();
         wordsFromQuery = new ArrayList<>();
         searchResponse = new SearchResponse();
         searchResponse.setResult(true);
-        searchDataList = new ArrayList<>();
+        totalPageList = new ArrayList<>();
+        mapOfAbsRel = new HashMap<>();
 
         for (String st : listSites) {
             Optional<SiteEntity> siteEntity = siteRepository.findByUrl(st);
@@ -73,8 +78,12 @@ public class SearchServiceImpl implements SearchService{
                     pageListFilter(wordsFromQuery.get(i), pageList);
                 }
             }
-            fillSearchDataList(pageList, searchDataList);
+            totalPageList.addAll(pageList);
+            findAbsRel(pageList);
         }
+        snippet = new Snippet(wordsFromQuery.stream()
+                .map(nl -> nl.getLemma()).collect(Collectors.toList()));
+        toSortByRelevance();
         return searchDataListToShow(offset, limit, start);
     }
 
@@ -93,9 +102,8 @@ public class SearchServiceImpl implements SearchService{
         return listSites;
     }
 
-    private void createLemmaList(SiteEntity siteEntity, String query) throws IOException {
+    private void createLemmaList(SiteEntity siteEntity, String query) {
         List<LemmaEntity> lemmaList = new ArrayList<>();
-        LemmaFinder lemmaFinder = LemmaFinder.getInstance();
         Set<String> lemmas = lemmaFinder.getLemmaSet(query);
         lemmas.forEach(l -> {
             Optional<LemmaEntity> lemmaEntity = lemmaRepository.findByLemma(l, siteEntity);
@@ -129,21 +137,7 @@ public class SearchServiceImpl implements SearchService{
         pageList.removeAll(newPageList);
     }
 
-    private void fillSearchDataList(List<PageEntity> pageList, List<SearchData> searchDataList) throws IOException{
-        maxAbsRel = 0;
-        findAbsRel(pageList);
-        for (PageEntity pl : pageList) {
-            try {
-                SearchData searchData = fillSearchData(pl);
-                searchDataList.add(searchData);
-            }catch (HttpStatusException ex) {
-                log.error("connection error!!!");
-            }
-        }
-    }
-
     private void findAbsRel(List<PageEntity> pgs) {
-        mapOfAbsRel = new HashMap<>();
         for (PageEntity p : pgs) {
             double absRel = 0;
             for (LemmaEntity lm : wordsFromQuery) {
@@ -157,8 +151,8 @@ public class SearchServiceImpl implements SearchService{
         }
     }
 
-    private Document connectUrl(String pathh) throws IOException {
-        Document document = Jsoup.connect(pathh)
+    private Document connectUrl(String path) throws IOException {
+        Document document = Jsoup.connect(path)
                 .userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
                 .referrer("http://www.google.com").get();
         return document;
@@ -166,31 +160,50 @@ public class SearchServiceImpl implements SearchService{
 
     private SearchData fillSearchData(PageEntity pageEntity) throws IOException {
         String path = pageEntity.getSiteId().getUrl() + pageEntity.getPath();
+        log.info("This is path - " + path);
         Document doc = connectUrl(path);
-        double absRel = mapOfAbsRel.get(pageEntity);
-        String snip = snippet.findAndExtractSentence(pageEntity.getContent(), wordsFromQuery.stream()
-                .map(nl -> nl.getLemma()).collect(Collectors.toList()));
+        String snip = snippet.findAndExtractSentence(pageEntity.getContent());
 
-        double rel = absRel / maxAbsRel;
+        double rel = mapOfRel.get(pageEntity);
+        log.info("This is relevance - " + rel);
         return new SearchData(pageEntity, doc.title(), snip, rel);
     }
 
-    private SearchResponse searchDataListToShow(int offset, int limit, long start) {
-        searchDataList = searchDataList
-                .stream()
-                .sorted(Comparator.comparing(SearchData::getRelevance).reversed())
-                .collect(Collectors.toList());
+    private void toSortByRelevance() {
+        mapOfRel = new HashMap<>();
+        sortedPageList = new ArrayList<>();
+        for (PageEntity pg : totalPageList) {
+            double rel = mapOfAbsRel.get(pg) / maxAbsRel;
+            mapOfRel.put(pg, rel);
+        }
 
-        List<SearchData> newSearchDataList = new ArrayList<>();
+        mapOfRel.entrySet()
+                .stream()
+                .sorted(Map.Entry.<PageEntity, Double>comparingByValue().reversed())
+                .forEach(s -> sortedPageList.add(s.getKey()));
+
+    }
+
+    private SearchResponse searchDataListToShow(int offset, int limit, long start) throws IOException {
+        int e = 0;
+
+        searchDataList = new ArrayList<>();
         int countToShow = offset + limit;
-        if (countToShow > searchDataList.size()) {
-            countToShow = searchDataList.size();
+        if (countToShow > sortedPageList.size()) {
+            countToShow = sortedPageList.size();
         }
         for (int i = offset; i < countToShow; i++) {
-            newSearchDataList.add(searchDataList.get(i));
+            try {
+                SearchData searchData = fillSearchData(sortedPageList.get(i));
+                searchDataList.add(searchData);
+            }catch (HttpStatusException ex) {
+                log.error("connection error!!! on page + " + sortedPageList.get(i).getPath());
+                log.info("Status code - " + ex.getStatusCode());
+                e++;
+            }
         }
-        searchResponse.setCount(searchDataList.size());
-        searchResponse.setData(newSearchDataList);
+        searchResponse.setCount(sortedPageList.size() - e);
+        searchResponse.setData(searchDataList);
 
         log.info(searchDataList.size() + " - Это count");
         log.info("Это offset - " + offset);

@@ -1,6 +1,5 @@
 package searchengine.dto.search;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import searchengine.model.PageEntity;
@@ -17,11 +16,20 @@ public class SearchData {
     private double relevance;
 
     public SearchData(PageEntity pageEntity, String title, String snippet, double relevance) {
-        site = pageEntity.getSiteId().getUrl();
-        siteName = pageEntity.getSiteId().getName();
+        site = pageEntity.getSite().getUrl();
+        siteName = pageEntity.getSite().getName();
         uri = pageEntity.getPath();
         this.title = title;
         this.snippet = snippet;
         this.relevance = relevance;
+    }
+
+    public SearchData() {
+        site = null;
+        siteName = " ";
+        uri = null;
+        title = " ";
+        snippet = " ";
+        relevance = 0.0;
     }
 }

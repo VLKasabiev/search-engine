@@ -4,8 +4,8 @@ import lombok.extern.log4j.Log4j2;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 import searchengine.config.Site;
 import searchengine.config.SitesList;
 import searchengine.crawler.LinksCrawler;
@@ -31,10 +31,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 @Log4j2
 public class IndexingServiceImpl implements IndexingService {
+
     private final SiteRepository siteRepository;
     private final PageRepository pageRepository;
     private final LemmaRepository lemmaRepository;
     private final IndexRepository indexRepository;
+    private final TransactionTemplate transactionTemplate;
 
     private final SitesList sites;
     private String url;
@@ -43,7 +45,7 @@ public class IndexingServiceImpl implements IndexingService {
     private ExecutorService executorService;
 
     @Override
-    public IndexingResponse startInMiltithread(){
+    public IndexingResponse startAsync(){
         IndexingResponse response = new IndexingResponse();
             response.setResult(true);
             CompletableFuture<Void> future = CompletableFuture
@@ -70,6 +72,7 @@ public class IndexingServiceImpl implements IndexingService {
             parallelization(siteEntity, builder1, uniqueUrl);
         }
         executorService.shutdown();
+        log.info("Execution time for method start indexing is: " + start);
     }
 
     @Override
@@ -87,13 +90,13 @@ public class IndexingServiceImpl implements IndexingService {
                 response.setResult(true);
                 response.setError(" ");
                 Optional<SiteEntity> siteEntity = siteRepository.findByUrl(site.getUrl());
-                checkSite(siteEntity, response);
+                checkSiteAndPage(siteEntity, response);
             }
         }
         return response;
     }
 
-    private void checkSite(Optional<SiteEntity> siteEntity, IndexingResponse response) throws IOException {
+    private void checkSiteAndPage(Optional<SiteEntity> siteEntity, IndexingResponse response) throws IOException {
         if (siteEntity.isPresent()) {
             try {
                 builder = new StringBuilder();
@@ -106,9 +109,9 @@ public class IndexingServiceImpl implements IndexingService {
                 }
             } catch (HttpStatusException e) {
                 if (e.getStatusCode() == 404) {
-                    response.setError("Такой cтраницы не существует!");
+                    response.setError("This page does not exist!");
                     response.setResult(false);
-                    log.error("Страницы не существует!");
+                    log.error("This page does not exist!");
                 }
             }
         }
@@ -160,15 +163,40 @@ public class IndexingServiceImpl implements IndexingService {
     private void parallelization(SiteEntity siteEntity, StringBuilder builder1,
                                  HashSet<String> uniqueUrl) {
         executorService.submit(() -> {
-            long start = System.currentTimeMillis();
-            ForkJoinPool FJP = new ForkJoinPool();
-            FJP.invoke(new LinksCrawler(url, url, siteEntity,
-                    pageRepository, lemmaRepository, indexRepository,
-                    builder1, uniqueUrl, isClosed, siteRepository));
-            FJP.shutdown();
-            changeSiteStatusIfOk(siteEntity);
-            log.info("Время выполнения программы - " + (System.currentTimeMillis() - start) + " ms." );
+            try {
+                long start = System.currentTimeMillis();
+                log.info("Starting indexing for site: " + siteEntity.getUrl());
+
+                ForkJoinPool FJP = new ForkJoinPool();
+                FJP.invoke(new LinksCrawler(
+                        url, url, siteEntity,
+                        pageRepository, lemmaRepository, indexRepository,
+                        builder1, uniqueUrl, isClosed, siteRepository, transactionTemplate
+                ));
+                FJP.shutdown();
+
+                log.info("Finished indexing for site: " + siteEntity.getUrl());
+                changeSiteStatusIfOk(siteEntity);
+                log.info("Execution time: " + (System.currentTimeMillis() - start) + " ms");
+            } catch (Exception e) {
+                log.error("Error during indexing for site: " + siteEntity.getUrl(), e);
+                siteEntity.setIndexStatus(IndexStatus.FAILED);
+                siteEntity.setLastError("Error during indexing: " + e.getMessage());
+                siteRepository.save(siteEntity);
+            }
         });
+
+
+//        executorService.submit(() -> {
+//            long start = System.currentTimeMillis();
+//            ForkJoinPool FJP = new ForkJoinPool();
+//            FJP.invoke(new LinksCrawler(url, url, siteEntity,
+//                    pageRepository, lemmaRepository, indexRepository,
+//                    builder1, uniqueUrl, isClosed, siteRepository));
+//            FJP.shutdown();
+//            changeSiteStatusIfOk(siteEntity);
+//            log.info("Execution time - " + (System.currentTimeMillis() - start) + " ms." );
+//        });
     }
 
     private void changeSiteStatusIfOk(SiteEntity siteEntity) {
@@ -179,8 +207,12 @@ public class IndexingServiceImpl implements IndexingService {
         if (isClosed.get() == true) {
             siteEntity.setLastError("Индексация остановлена пользователем");
         }
+        if (siteEntity.getLastError() == null) {
+            siteEntity.setLastError(" ");
+        }
         siteRepository.save(siteEntity);
     }
+
     private PageEntity fillingPageEntity(String url, Optional<SiteEntity> siteEntity) throws IOException {
         Document document = Jsoup.connect(url)
                 .ignoreContentType(true).get();
@@ -191,7 +223,7 @@ public class IndexingServiceImpl implements IndexingService {
         pageEntity.setCode(200);
         pageEntity.setPath(path);
         pageEntity.setContent(document.outerHtml());
-        pageEntity.setSiteId(siteEntity.get());
+        pageEntity.setSite(siteEntity.get());
 
         pageRepository.save(pageEntity);
 

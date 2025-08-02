@@ -21,8 +21,8 @@ public interface IndexRepository extends JpaRepository<IndexEntity, Long> {
     @Transactional
     void deleteByPageId(PageEntity pageEntity);
 
-    @Query("SELECT i.pageId FROM IndexEntity i WHERE i.lemmaId = :lemmaEntity")
+    @Query("SELECT i.page FROM IndexEntity i WHERE i.lemma = :lemmaEntity")
     List<PageEntity> findAllPagesByLemmaId(LemmaEntity lemmaEntity);
 
-    IndexEntity findByPageIdAndLemmaId(PageEntity pageEntity, LemmaEntity lemmaEntity);
+    IndexEntity findByPageAndLemma(PageEntity pageEntity, LemmaEntity lemmaEntity);
 }

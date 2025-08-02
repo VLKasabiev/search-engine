@@ -19,21 +19,34 @@ public class Snippet {
     public String findAndExtractSentence(String t) throws IOException {
         String text = lemmaFinder.removeHTMLTags(t);
         return findSnippet(text);
+
     }
     public String findSnippet(String text){
         List<Integer> wts = new ArrayList<>();
         for (int i = 0; i < wordsToSearch.size(); i++) {
             wts.add(i);
         }
-
+        boolean snippetIsTooSmall = false;
         builder = new StringBuilder();
         String[] sentences = text.split("[.!?:;]\\s*");
         for (String sentence : sentences) {
 
             checkSentence(sentence);
 
+            if (snippetIsTooSmall && builder.length() < 250) {
+                sentenceToString();
+            } else  if (snippetIsTooSmall && builder.length() > 250){
+                return builder.toString();
+            }
+
             if (wordsOnSentenceNum.size() == wordsToSearch.size()) {
-                return wordsToSentence();
+                String snippet = wordsToSentence();
+                if (snippet.length() < 250) {
+                    snippetIsTooSmall = true;
+                    builder.append(snippet + ". ! ");
+                    continue;
+               }
+                return snippet;
             }
 
             if (wts.size() != 0 && wordsOnSentenceNum.size() != 0) {
@@ -85,5 +98,12 @@ public class Snippet {
             }
 
         }
+    }
+
+    private String sentenceToString() {
+        for (String word : words) {
+            builder.append(word + " ");
+        }
+        return builder.toString();
     }
 }

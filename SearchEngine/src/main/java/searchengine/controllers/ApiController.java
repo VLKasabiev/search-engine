@@ -32,7 +32,7 @@ public class ApiController {
     }
     @GetMapping("/startIndexing")
     public ResponseEntity<IndexingResponse> startIndexing() throws ExecutionException, InterruptedException {
-        return ResponseEntity.ok(indexingService.startInMiltithread());
+        return ResponseEntity.ok(indexingService.startAsync());
     }
     @GetMapping("/stopIndexing")
     public ResponseEntity<IndexingResponse> stopIndexing() {

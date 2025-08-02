@@ -6,7 +6,7 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "indexes")
+@Table(name = "search_indexes")
 @Getter
 @Setter
 public class IndexEntity {
@@ -17,10 +17,10 @@ public class IndexEntity {
 
     @ManyToOne
     @JoinColumn(name = "page_id", nullable = false)
-    private PageEntity pageId;
+    private PageEntity page;
     @ManyToOne
     @JoinColumn(name = "lemma_id", nullable = false)
-    private LemmaEntity lemmaId;
+    private LemmaEntity lemma;
 
     @Column(name = "lemma_rank", nullable = false)
     private Float rank;

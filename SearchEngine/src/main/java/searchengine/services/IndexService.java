@@ -1,6 +1,5 @@
 package searchengine.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import searchengine.model.IndexEntity;
 import searchengine.model.LemmaEntity;
 import searchengine.model.PageEntity;
@@ -15,8 +14,8 @@ public class IndexService {
 
     public void fillIndexEntity(PageEntity pageEntity, LemmaEntity lemmaEntity, Float rank) {
         IndexEntity indexEntity = new IndexEntity();
-        indexEntity.setPageId(pageEntity);
-        indexEntity.setLemmaId(lemmaEntity);
+        indexEntity.setPage(pageEntity);
+        indexEntity.setLemma(lemmaEntity);
         indexEntity.setRank(rank);
         indexRepository.save(indexEntity);
     }

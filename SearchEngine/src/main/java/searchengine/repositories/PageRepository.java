@@ -19,7 +19,7 @@ public interface PageRepository extends JpaRepository <PageEntity, Long> {
     @Transactional
     void deleteByPath(String path);
 
-    @Query("SELECT COUNT(*) FROM PageEntity p Where p.siteId = :siteEntity")
+    @Query("SELECT COUNT(*) FROM PageEntity p Where p.site = :siteEntity")
     int getPagesCount(SiteEntity siteEntity);
 
     @Query("SELECT COUNT(*) FROM PageEntity p")

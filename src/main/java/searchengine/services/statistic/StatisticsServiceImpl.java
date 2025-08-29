@@ -32,7 +32,6 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Autowired
     private LemmaRepository lemmaRepository;
 
-//    private final Random random = new Random();
     private final SitesList sites;
 
     @Override

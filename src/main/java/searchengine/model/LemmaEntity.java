@@ -6,15 +6,6 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-//@Table(name = "lemmas")
-//@Table(name = "lemmas", indexes = {
-//        @Index(name = "idx_lemma_site", columnList = "lemma, site_id")
-//}, uniqueConstraints = {
-//        @UniqueConstraint(
-//                name = "lemma_unique",
-//                columnNames = {"lemma", "site_id"}
-//        )
-//})
 @Table(name = "lemmas",
         indexes = {
                 @Index(name = "idx_lemma_site", columnList = "lemma, site_id")

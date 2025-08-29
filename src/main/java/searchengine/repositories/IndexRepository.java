@@ -17,10 +17,6 @@ public interface IndexRepository extends JpaRepository<IndexEntity, Long> {
     @Transactional
     void deleteByLemmaId(LemmaEntity lemmaEntity);
 
-    @Modifying
-    @Transactional
-    void deleteByPageId(PageEntity pageEntity);
-
     @Query("SELECT i.page FROM IndexEntity i WHERE i.lemma = :lemmaEntity")
     List<PageEntity> findAllPagesByLemmaId(LemmaEntity lemmaEntity);
 

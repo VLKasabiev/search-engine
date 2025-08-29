@@ -18,12 +18,9 @@ public interface LemmaRepository extends JpaRepository<LemmaEntity, Long> {
             @Param("lemma") String lemma,
             @Param("site") SiteEntity site);
 
-//    @Query("SELECT l FROM LemmaEntity l WHERE l.lemma = :lemma AND l.site.id = :siteId")
-//    Optional<LemmaEntity> findByLemmaAndSiteId(@Param("lemma") String lemma,
-//                                               @Param("siteId") Long siteId);
 
     @Modifying
-    @Transactional  // Добавляем транзакцию на уровне репозитория
+    @Transactional
     @Query(nativeQuery = true, value = """
         INSERT INTO lemmas (lemma, site_id, frequency)
         VALUES (:lemma, :siteId, 1)
@@ -36,11 +33,6 @@ public interface LemmaRepository extends JpaRepository<LemmaEntity, Long> {
     int getLemmasBySiteId(SiteEntity siteEntity);
     @Query("SELECT COUNT(*) FROM LemmaEntity l")
     int getTotalLemmas();
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE LemmaEntity l SET l.frequency = l.frequency + 1 WHERE l.id = :id")
-    void incrementFrequency(@Param("id") Long id);
     @Modifying
     @Transactional
     void deleteAllBySiteId(SiteEntity siteEntity);

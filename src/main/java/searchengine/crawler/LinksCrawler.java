@@ -151,79 +151,6 @@ public class LinksCrawler extends RecursiveAction {
                 || contentType.contains("+xml");
     }
 
-//    @Override
-//    protected void compute() {
-//        if (isClosed.get() == true) {
-//            site.setIndexStatus(IndexStatus.FAILED);
-//            log.info("a closing operation occurred!!!");
-//            return;
-//        }
-//        try {
-//            path = url.replace(regexUrl, "");
-//            if (path.equals("")) {
-//                path = "/";
-//                uniqueUrl.add(regexUrl + path);
-//            }
-//
-//            Thread.sleep(150);
-//
-//            try {
-//                Connection.Response response = Jsoup.connect(url).userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6").
-//                        referrer("http://www.google.com").execute();
-//                statusCode = response.statusCode();
-//
-//                if (statusCode == 200L) {
-//                    String contentType = response.contentType();
-//                    if (contentType == null ||
-//                            (!contentType.startsWith("text/") &&
-//                                    !contentType.contains("application/xml") &&
-//                                    !contentType.contains("application/+xml"))) {
-//                        log.warn("Unhandled content type for URL: " + url + " (Content-Type: " + contentType + ")");
-//                        content = " ";  // Сохраняем пустой контент
-//                        pageEntity = fillingPage();
-//                        builder.append("\n" + regexUrl + path);
-//                        return;
-//                    }
-//                    try {
-//                        Document document = response.parse();
-//                        content = document.outerHtml();
-//
-//                        pageEntity = fillingPage();
-//                        builder.append("\n" + regexUrl + path);
-//
-//                        LemmaService lemmaService = new LemmaService(site,
-//                                lemmaRepository, indexRepository, builder);
-//
-//                        lemmaService.setPageEntity(pageEntity);
-//                        lemmaService.fillLemmaEntity();
-//
-//                        Elements elements = document.select("a[href]");
-//                        List<LinksCrawler> taskList = new ArrayList<>();;
-//
-//                        elementsCrawling(elements, taskList);
-//
-//                        for (LinksCrawler map : taskList) {
-//                            map.join();
-//                        }
-//                    } catch (UnsupportedMimeTypeException e) {
-//                        log.warn("Unsupported MIME type for URL: " + url + " - " + e.getMessage());
-//                        content = " ";
-//                        pageEntity = fillingPage();
-//                        builder.append("\n" + regexUrl + path);
-//                    }
-//
-//                }
-//            } catch (HttpStatusException e) {
-//                statusCode = e.getStatusCode();
-//                content = " ";
-//                pageEntity = fillingPage();
-//                builder.append("\n" + regexUrl + path);
-//            }
-//        } catch(Exception e) {
-//            fillSiteInCaseEx(e);
-//        }
-//    }
-
     private void elementsCrawling (Elements elements, List<LinksCrawler> taskList) throws IOException {
         for (Element elem : elements) {
             String link = elem.attr("abs:href");
@@ -238,19 +165,6 @@ public class LinksCrawler extends RecursiveAction {
             }
         }
     }
-
-//    private boolean checkLink(boolean checked, String link) {
-//        return checked && !link.contains("#")
-//                && !link.contains("%")
-//                && link.startsWith(regexUrl)
-//                && !link.equals(regexUrl)
-//                && !link.equals(regexUrl + "/null")
-//                && !link.endsWith(".png") && !link.endsWith(".JPG") && !link.endsWith(".pdf") && !link.endsWith(".xlsx")
-//                && !link.endsWith(".doc") && !link.endsWith(".jpg") && !link.endsWith(".yaml") && !link.endsWith(".xml")
-//                && !link.endsWith(".zip") && !link.endsWith(".rar") && !link.endsWith(".exe")
-//                && !link.endsWith(".gif") && !link.endsWith(".svg") && !link.endsWith(".mp4");
-//
-//    }
 
     private boolean checkLink(boolean checked, String link) {
         return checked
@@ -272,17 +186,6 @@ public class LinksCrawler extends RecursiveAction {
             pageEntity.setSite(site);
             return pageRepository.save(pageEntity);
         });
-//        PageEntity pageEntity = new PageEntity();
-//
-//        pageEntity.setCode(statusCode);
-//        pageEntity.setPath(path);
-//        pageEntity.setContent(content);
-//        pageEntity.setSite(site);
-//        pageRepository.save(pageEntity);
-//
-//        builder.append(path + "\n");
-//
-//        return pageEntity;
     }
 
     private void fillSiteInCaseEx (Exception e) {

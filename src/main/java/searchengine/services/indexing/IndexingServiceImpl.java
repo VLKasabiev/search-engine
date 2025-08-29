@@ -185,18 +185,6 @@ public class IndexingServiceImpl implements IndexingService {
                 siteRepository.save(siteEntity);
             }
         });
-
-
-//        executorService.submit(() -> {
-//            long start = System.currentTimeMillis();
-//            ForkJoinPool FJP = new ForkJoinPool();
-//            FJP.invoke(new LinksCrawler(url, url, siteEntity,
-//                    pageRepository, lemmaRepository, indexRepository,
-//                    builder1, uniqueUrl, isClosed, siteRepository));
-//            FJP.shutdown();
-//            changeSiteStatusIfOk(siteEntity);
-//            log.info("Execution time - " + (System.currentTimeMillis() - start) + " ms." );
-//        });
     }
 
     private void changeSiteStatusIfOk(SiteEntity siteEntity) {

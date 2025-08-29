@@ -23,23 +23,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: true
-
-
-#spring:
-#  datasource:
-#    username: root
-#    password: xxxkas01
-#    url: jdbc:mysql://mysql:3307/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
-#    #url: jdbc:mysql://mysql:3307/search_engine?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-#  jpa:
-#    properties:
-#      hibernate:
-#        dialect: org.hibernate.dialect.MySQL8Dialect
-#    hibernate:
-#      ddl-auto: update
-#    show-sql: true
 
 connect-settings:
   userArgentValue: Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6

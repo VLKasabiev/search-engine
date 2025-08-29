@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import searchengine.model.PageEntity;
 
-//@Data
+
 @Getter
 @Setter
 public class SearchData {
